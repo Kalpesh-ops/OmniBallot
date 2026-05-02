@@ -2,6 +2,8 @@ import { type NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true, // Recommended for identifying potential problems in an application
+  output: 'standalone', // Critical for Cloud Run efficiency and deployment
+
   async headers() {
     return [
       {
