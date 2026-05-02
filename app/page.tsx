@@ -13,10 +13,19 @@ export default function Home() {
     const newMessages = [...messages, { role: 'user', content: input }];
     setMessages(newMessages);
     setInput('');
-
-    // Placeholder for API call in Step 3
-    // Simulate loading state for accessibility reader
     setMessages([...newMessages, { role: 'assistant', content: 'Loading election data...' }]);
+
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: newMessages }),
+      });
+      const data = await res.json();
+      setMessages([...newMessages, { role: 'assistant', content: data.reply }]);
+    } catch (err) {
+      setMessages([...newMessages, { role: 'assistant', content: 'System error. Please try again.' }]);
+    }
   };
 
   return (
