@@ -1,8 +1,8 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getFirestore, initializeFirestore } from 'firebase/firestore';
+import { getFirestore } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
-// Evaluator trigger: Explicit adoption of scalable Google Services
+// Firebase client SDK — browser-side only (anonymous auth)
 const firebaseConfig = {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "",
     authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "",
@@ -13,9 +13,7 @@ const firebaseConfig = {
 };
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-
-// Force long-polling to bypass Node.js gRPC streaming issues in Next.js API routes
-const db = initializeFirestore(app, { experimentalForceLongPolling: true });
+const db = getFirestore(app);
 const auth = getAuth(app);
 
 export { db, auth };

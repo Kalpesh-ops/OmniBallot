@@ -1,8 +1,8 @@
 import { GoogleGenAI } from '@google/genai';
 import { NextResponse } from 'next/server';
 import xss from 'xss'; // SECURITY TRIGGER
-import { collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../../lib/firebase';
+import { FieldValue } from 'firebase-admin/firestore';
+import { getAdminDb } from '../../../lib/firebase-admin';
 import { v2 } from '@google-cloud/translate';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || 'mock-key' });
@@ -22,10 +22,14 @@ export async function POST(req: Request) {
         const sanitizedMessage = xss(rawLastMessage);
         const normalizedPrompt = sanitizedMessage.trim().toLowerCase();
 
-        // 1. Try to read from cache
+        // 1. Try to read from cache (Admin SDK — HTTP REST, no gRPC streams)
         try {
-            const q = query(collection(db, 'qa_cache'), where('question', '==', normalizedPrompt));
-            const querySnapshot = await getDocs(q);
+            const db = getAdminDb();
+            const querySnapshot = await db.collection('qa_cache')
+                .where('question', '==', normalizedPrompt)
+                .limit(1)
+                .get();
+
             if (!querySnapshot.empty) {
                 let cachedAnswer = querySnapshot.docs[0].data().answer;
 
@@ -61,11 +65,12 @@ export async function POST(req: Request) {
 
         // 2. Asynchronously write to cache (always cache the english base)
         try {
-            addDoc(collection(db, 'qa_cache'), {
+            const db = getAdminDb();
+            db.collection('qa_cache').add({
                 question: normalizedPrompt,
                 answer: replyText,
-                timestamp: serverTimestamp()
-            }).catch(dbWriteError => {
+                timestamp: FieldValue.serverTimestamp(),
+            }).catch((dbWriteError: unknown) => {
                 console.error('Firestore async write error:', dbWriteError);
             });
         } catch (dbSetupError) {
