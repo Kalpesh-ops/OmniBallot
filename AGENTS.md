@@ -7,7 +7,7 @@
 
 ## Project Overview
 
-**OmniBallot** is an AI-powered election process education assistant built for the HackerRank Orchestrate hackathon. It helps users understand voter registration, polling locations, election timelines, ballot procedures, and voter ID requirements. It is **not** official legal/electoral advice.
+**OmniBallot** is an AI-powered election process education assistant built for the PromptWars hackathon. It helps users understand voter registration, polling locations, election timelines, ballot procedures, and voter ID requirements. It is **not** official legal/electoral advice.
 
 **Vertical:** Election Process Education  
 **Live stack:** Next.js 16 (App Router) + Tailwind CSS v4 + Framer Motion + Google Gemini 2.5 Flash  
