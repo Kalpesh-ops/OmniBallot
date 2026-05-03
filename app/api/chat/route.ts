@@ -3,8 +3,10 @@ import { NextResponse } from 'next/server';
 import xss from 'xss'; // SECURITY TRIGGER
 import { collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
+import { v2 } from '@google-cloud/translate';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || 'mock-key' });
+const translate = new v2.Translate({ key: process.env.GOOGLE_TRANSLATE_API_KEY || 'mock-key' });
 
 export async function POST(req: Request) {
     try {
@@ -13,7 +15,7 @@ export async function POST(req: Request) {
             return new NextResponse('Unauthorized', { status: 401 });
         }
 
-        const { messages } = await req.json();
+        const { messages, language } = await req.json();
 
         // SECURITY TRIGGER: Sanitize user input against XSS vectors
         const rawLastMessage = messages[messages.length - 1].content;
@@ -25,8 +27,18 @@ export async function POST(req: Request) {
             const q = query(collection(db, 'qa_cache'), where('question', '==', normalizedPrompt));
             const querySnapshot = await getDocs(q);
             if (!querySnapshot.empty) {
-                const cachedDoc = querySnapshot.docs[0].data();
-                return NextResponse.json({ reply: cachedDoc.answer }, {
+                let cachedAnswer = querySnapshot.docs[0].data().answer;
+
+                if (language && language !== 'en') {
+                    try {
+                        const [translation] = await translate.translate(cachedAnswer, language);
+                        cachedAnswer = translation;
+                    } catch (e) {
+                        console.error('Translation error on cache hit:', e);
+                    }
+                }
+
+                return NextResponse.json({ reply: cachedAnswer }, {
                     status: 200,
                     headers: { 'Cache-Control': 's-maxage=86400, stale-while-revalidate' },
                 });
@@ -45,9 +57,9 @@ export async function POST(req: Request) {
             contents: `You are an election process assistant. Keep it concise. User asks: ${sanitizedMessage}`
         });
         
-        const replyText = response.text;
+        let replyText = response.text;
 
-        // 2. Asynchronously write to cache
+        // 2. Asynchronously write to cache (always cache the english base)
         try {
             addDoc(collection(db, 'qa_cache'), {
                 question: normalizedPrompt,
@@ -58,6 +70,15 @@ export async function POST(req: Request) {
             });
         } catch (dbSetupError) {
             console.error('Firestore setup error:', dbSetupError);
+        }
+
+        if (language && language !== 'en') {
+            try {
+                const [translation] = await translate.translate(replyText, language);
+                replyText = translation;
+            } catch (e) {
+                console.error('Translation error on generation:', e);
+            }
         }
 
         return NextResponse.json({ reply: replyText }, {

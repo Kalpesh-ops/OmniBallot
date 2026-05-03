@@ -1,13 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
 import { signInAnonymously } from 'firebase/auth';
 import { auth } from '../lib/firebase';
-import type { Message } from '../types';
+import type { Message, LanguageCode } from '../types';
 
 export function useChat() {
     const [input, setInput] = useState('');
     const [messages, setMessages] = useState<Message[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [hasStartedChat, setHasStartedChat] = useState(false);
+    const [language, setLanguage] = useState<LanguageCode>('en');
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -52,7 +53,7 @@ export function useChat() {
             const res = await fetch('/api/chat', {
                 method: 'POST',
                 headers,
-                body: JSON.stringify({ messages: newMessages }),
+                body: JSON.stringify({ messages: newMessages, language }),
             });
 
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -85,5 +86,7 @@ export function useChat() {
         handleSuggestionClick,
         messagesEndRef,
         inputRef,
+        language,
+        setLanguage,
     };
 }

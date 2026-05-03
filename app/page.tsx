@@ -19,6 +19,8 @@ export default function Home() {
     handleSuggestionClick,
     messagesEndRef,
     inputRef,
+    language,
+    setLanguage,
   } = useChat();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -34,6 +36,8 @@ export default function Home() {
         onToggle={() => setSidebarOpen(!sidebarOpen)}
         onSuggestionClick={handleSuggestionClick}
         hasStartedChat={hasStartedChat}
+        language={language}
+        onLanguageChange={setLanguage}
       />
 
       <main className="flex h-dvh flex-col items-center px-4 pb-6 pt-4 md:px-12 md:pb-8 md:pt-6 relative selection:bg-cyan-500/25">

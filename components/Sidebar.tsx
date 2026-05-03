@@ -10,8 +10,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
+  Globe,
 } from 'lucide-react';
-import type { SidebarProps } from '../types';
+import type { SidebarProps, LanguageCode } from '../types';
 
 const suggestions = [
   {
@@ -41,7 +42,7 @@ const suggestions = [
   },
 ];
 
-export function Sidebar({ isOpen, onToggle, onSuggestionClick, hasStartedChat }: SidebarProps) {
+export function Sidebar({ isOpen, onToggle, onSuggestionClick, hasStartedChat, language, onLanguageChange }: SidebarProps) {
   return (
     <>
       {/* Toggle Button — always visible */}
@@ -112,8 +113,33 @@ export function Sidebar({ isOpen, onToggle, onSuggestionClick, hasStartedChat }:
                 ))}
               </nav>
 
+              {/* Language Selector */}
+              <div className="mt-4 mb-2 px-2">
+                <div className="flex items-center gap-2 mb-3">
+                  <Globe size={14} className="text-slate-500" />
+                  <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Language</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {(['en', 'es', 'hi'] as LanguageCode[]).map((lang) => (
+                    <button
+                      key={lang}
+                      onClick={() => onLanguageChange(lang)}
+                      className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                        language === lang
+                          ? 'bg-cyan-600 text-white shadow-md shadow-cyan-950/50'
+                          : 'bg-white/[0.04] text-slate-400 hover:bg-white/[0.08] hover:text-slate-200'
+                      }`}
+                      aria-label={`Switch to ${lang.toUpperCase()}`}
+                      aria-pressed={language === lang}
+                    >
+                      {lang.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Footer */}
-              <div className="mt-auto pt-4 border-t border-white/[0.05] px-2">
+              <div className="mt-2 pt-4 border-t border-white/[0.05] px-2">
                 <p className="text-[10px] text-slate-600 leading-relaxed">
                   Powered by Gemini AI · Educational use only
                 </p>
