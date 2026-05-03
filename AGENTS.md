@@ -181,6 +181,18 @@ This is a hackathon submission requirement. The 10 MB cap applies to the **full 
 
 ---
 
+## Git Commit History Hygiene
+
+To maintain a clean and readable project history, all agents must adhere to the following commit message rules:
+
+1. **Format:** Use Conventional Commits format: `<type>(<scope>): <short description>`.
+   - Examples: `feat(api): implement firestore caching`, `fix(ui): resolve title clipping issue`, `docs: update agent context`.
+2. **Brevity:** Keep the message concise. Do not exceed one line. 4-5 words or a short phrase is ideal.
+3. **Clarity:** Ensure anyone reviewing the commit messages can instantly understand the changes made just by reading the summary line.
+4. **Logical Commits:** Group related changes together. For multifaceted tasks, create separate, focused commits (e.g., one for UI changes, one for API logic).
+
+---
+
 ## Known Pitfalls
 
 1. **Don't use `min-h-screen` on main** — causes overflow on mobile. Use `h-dvh`.
