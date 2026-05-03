@@ -17,9 +17,9 @@ const nextConfig: NextConfig = {
             value: `
               default-src 'self';
               script-src 'self' 'unsafe-inline' 'unsafe-eval';
-              style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+              style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://api.fontshare.com;
               img-src 'self' data:;
-              font-src 'self' https://fonts.gstatic.com;
+              font-src 'self' https://fonts.gstatic.com https://cdn.fontshare.com;
               connect-src 'self' https://generativelanguage.googleapis.com https://translation.googleapis.com;
               frame-ancestors 'none'; // Prevents clickjacking by disallowing embedding in iframes
               form-action 'self';
