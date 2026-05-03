@@ -174,6 +174,11 @@ export default function Home() {
           </div>
         </motion.section>
 
+        {/* Attribution footer — always visible below chat panel */}
+        <p className="shrink-0 text-center text-[11px] text-slate-600 pt-2.5 pb-1 relative z-10 select-none">
+          Powered by Gemini AI · Educational use only
+        </p>
+
         {/* Bottom spacer — mirrors top spacer on initial load */}
         {!hasStartedChat && (
           <motion.div

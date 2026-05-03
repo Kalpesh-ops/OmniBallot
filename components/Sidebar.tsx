@@ -141,7 +141,7 @@ export function Sidebar({ isOpen, onToggle, onSuggestionClick, hasStartedChat, l
               {/* Footer */}
               <div className="mt-2 pt-4 border-t border-white/[0.05] px-2">
                 <p className="text-[10px] text-slate-600 leading-relaxed">
-                  Powered by Gemini AI · Educational use only
+                  OmniBallot · PromptWars 2026
                 </p>
               </div>
             </motion.aside>

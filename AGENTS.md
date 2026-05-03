@@ -124,7 +124,7 @@ Returns: `{ input, setInput, messages, isLoading, hasStartedChat, handleSubmit, 
 
 ### `<DisclaimerModal />`
 - Shows once per device (localStorage key: `omniballot-disclaimer-accepted`)
-- Glassmorphic overlay with amber ShieldAlert icon
+- Glassmorphic overlay with cyan ShieldAlert icon
 - Self-closing: user clicks "I Understand" or clicks backdrop
 
 ---

@@ -36,7 +36,7 @@ export function DisclaimerModal() {
           aria-labelledby="modal-title"
         >
           {/* Backdrop */}
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={handleAccept} />
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={handleAccept} />
 
           {/* Modal */}
           <motion.div
@@ -44,26 +44,29 @@ export function DisclaimerModal() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: 20 }}
             transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
-            className="relative w-full max-w-lg bg-slate-900/90 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl shadow-cyan-950/30 p-6 md:p-8"
+            className="relative w-full max-w-lg bg-slate-950/80 backdrop-blur-2xl border border-white/[0.07] rounded-2xl shadow-2xl shadow-cyan-950/40 p-6 md:p-8"
           >
             {/* Close button */}
             <button
               onClick={handleAccept}
-              className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-all"
+              className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition-all"
               aria-label="Close disclaimer"
             >
               <X size={18} />
             </button>
 
             {/* Icon */}
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
-                <ShieldAlert size={22} className="text-amber-400" />
+            <div className="flex items-center gap-3 mb-5">
+              <div className="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-400/15 shadow-[0_0_12px_rgba(8,145,178,0.12)]">
+                <ShieldAlert size={22} className="text-cyan-400" />
               </div>
               <h2 id="modal-title" className="text-lg font-semibold text-white">
                 Important Disclaimer
               </h2>
             </div>
+
+            {/* Divider */}
+            <div className="h-px bg-white/[0.06] mb-5" />
 
             {/* Content */}
             <div className="space-y-3 text-sm text-slate-300 leading-relaxed">
@@ -72,11 +75,11 @@ export function DisclaimerModal() {
                 to help you understand election processes, voter registration timelines, and polling procedures.
               </p>
               <p>
-                This tool does <strong className="text-amber-300">not</strong> provide official legal or electoral
+                This tool does <strong className="text-cyan-300">not</strong> provide official legal or electoral
                 advice. Always verify information with your local election authority or official government resources
                 before making decisions.
               </p>
-              <p className="text-slate-400 text-xs">
+              <p className="text-slate-500 text-xs">
                 By continuing, you acknowledge that responses are AI-generated and may not reflect the most
                 current regulations in your jurisdiction.
               </p>
@@ -85,7 +88,7 @@ export function DisclaimerModal() {
             {/* Action */}
             <button
               onClick={handleAccept}
-              className="mt-6 w-full h-11 bg-cyan-600 text-white text-sm font-medium rounded-xl hover:bg-cyan-500 active:scale-[0.98] transition-all shadow-[0_0_20px_rgba(8,145,178,0.15)] focus:outline-none focus:ring-2 focus:ring-cyan-400/50"
+              className="mt-6 w-full h-11 bg-cyan-600 text-white text-sm font-medium rounded-xl hover:bg-cyan-500 active:scale-[0.98] transition-all shadow-[0_0_20px_rgba(8,145,178,0.2)] focus:outline-none focus:ring-2 focus:ring-cyan-400/50"
             >
               I Understand — Continue
             </button>
