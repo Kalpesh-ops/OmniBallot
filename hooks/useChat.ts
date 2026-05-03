@@ -1,11 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { signInAnonymously } from 'firebase/auth';
 import { auth } from '../lib/firebase';
-
-export interface Message {
-    role: 'user' | 'assistant';
-    content: string;
-}
+import type { Message } from '../types';
 
 export function useChat() {
     const [input, setInput] = useState('');

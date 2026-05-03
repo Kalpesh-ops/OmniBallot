@@ -11,13 +11,7 @@ import {
   ChevronRight,
   Sparkles,
 } from 'lucide-react';
-
-interface SidebarProps {
-  isOpen: boolean;
-  onToggle: () => void;
-  onSuggestionClick: (text: string) => void;
-  hasStartedChat: boolean;
-}
+import type { SidebarProps } from '../types';
 
 const suggestions = [
   {
@@ -81,7 +75,7 @@ export function Sidebar({ isOpen, onToggle, onSuggestionClick, hasStartedChat }:
               exit={{ x: -280, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               className="fixed top-0 left-0 z-35 w-[260px] h-dvh flex flex-col bg-slate-950/80 backdrop-blur-2xl border-r border-white/[0.06] shadow-2xl shadow-black/40 pt-16 pb-6 px-4"
-              aria-label="Navigation Sidebar"
+              aria-label="Quick Topics"
             >
               {/* Brand area */}
               <div className="mb-6 px-2">

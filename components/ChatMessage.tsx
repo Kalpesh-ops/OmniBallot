@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Message } from '../hooks/useChat';
+import type { Message } from '../types';
 import { User, Bot } from 'lucide-react';
 
 export function ChatMessage({ message, isLatest, isLoading }: { message: Message; isLatest: boolean; isLoading?: boolean }) {

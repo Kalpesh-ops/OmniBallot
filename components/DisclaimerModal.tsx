@@ -33,7 +33,7 @@ export function DisclaimerModal() {
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
           role="dialog"
           aria-modal="true"
-          aria-labelledby="disclaimer-title"
+          aria-labelledby="modal-title"
         >
           {/* Backdrop */}
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={handleAccept} />
@@ -60,7 +60,7 @@ export function DisclaimerModal() {
               <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
                 <ShieldAlert size={22} className="text-amber-400" />
               </div>
-              <h2 id="disclaimer-title" className="text-lg font-semibold text-white">
+              <h2 id="modal-title" className="text-lg font-semibold text-white">
                 Important Disclaimer
               </h2>
             </div>
