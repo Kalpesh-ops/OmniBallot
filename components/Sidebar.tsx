@@ -42,6 +42,21 @@ const suggestions = [
   },
 ];
 
+/**
+ * Collapsible sidebar component that displays quick-topic suggestions and
+ * a language selector. Slides in from the left with a spring animation.
+ * On mobile viewports, renders a backdrop overlay and auto-closes on
+ * suggestion click.
+ *
+ * @param props - {@link SidebarProps} containing:
+ *   - `isOpen` — Whether the sidebar panel is currently visible.
+ *   - `onToggle` — Callback to open or close the sidebar.
+ *   - `onSuggestionClick` — Callback invoked with the suggestion query text.
+ *   - `hasStartedChat` — Whether the user has sent at least one message.
+ *   - `language` — Currently selected {@link LanguageCode}.
+ *   - `onLanguageChange` — Callback to change the active language.
+ * @returns The rendered sidebar React element.
+ */
 export function Sidebar({ isOpen, onToggle, onSuggestionClick, hasStartedChat, language, onLanguageChange }: SidebarProps) {
   return (
     <>

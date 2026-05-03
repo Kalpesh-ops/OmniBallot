@@ -2,6 +2,18 @@ import { motion } from 'framer-motion';
 import type { Message } from '../types';
 import { User, Bot } from 'lucide-react';
 
+/**
+ * Renders a single chat message bubble with an avatar icon.
+ * Supports both user and assistant message roles with distinct visual styles.
+ * Displays animated bouncing dots as a loading indicator when the assistant
+ * response is still being generated.
+ *
+ * @param props - Component properties:
+ *   - `message` — The {@link Message} object containing `role` and `content`.
+ *   - `isLatest` — Whether this is the most recent message in the list.
+ *   - `isLoading` — Optional flag indicating whether the chat is awaiting a response.
+ * @returns The rendered chat message React element.
+ */
 export function ChatMessage({ message, isLatest, isLoading }: { message: Message; isLatest: boolean; isLoading?: boolean }) {
     const isUser = message.role === 'user';
     const showDots = isLoading && isLatest && !isUser && message.content === '...';

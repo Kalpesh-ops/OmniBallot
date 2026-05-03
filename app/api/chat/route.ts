@@ -1,11 +1,22 @@
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NextResponse } from 'next/server';
 import xss from 'xss'; // SECURITY TRIGGER
 import { firestoreQuery, firestoreWrite } from '../../../lib/firebase-admin';
 import { v2 } from '@google-cloud/translate';
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || 'mock-key' });
+/**
+ * Initializes the Google Generative AI client using the classic SDK.
+ * Falls back to a mock key if GEMINI_API_KEY is not set.
+ */
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'mock-key');
+
+/**
+ * Initializes the Google Cloud Translation client for multi-language support.
+ */
 const translate = new v2.Translate({ key: process.env.GOOGLE_TRANSLATE_API_KEY || 'mock-key' });
+
+/** Expected CSRF token value for request validation. */
+const CSRF_TOKEN = 'omni-secure-token-2026';
 
 // --- Step 1: Hardened System Prompt (Anti-Prompt-Injection) ---
 const SYSTEM_PROMPT = `System Instruction: You are OmniBallot, a strict election process education assistant.
@@ -28,6 +39,13 @@ const POISON_INDICATORS = [
     'i must decline',
 ];
 
+/**
+ * Checks whether a generated response is safe to cache.
+ * Rejects responses containing known poison/refusal phrases.
+ *
+ * @param text - The response text from the AI model.
+ * @returns True if the text does not contain any poison indicators.
+ */
 function isSafeForCache(text: string): boolean {
     const lower = text.toLowerCase();
     return !POISON_INDICATORS.some(phrase => lower.includes(phrase));
@@ -47,6 +65,13 @@ setInterval(() => {
     }
 }, 60_000);
 
+/**
+ * Determines whether a given token has exceeded the rate limit.
+ * Uses an in-memory map with a sliding window of {@link RATE_LIMIT_WINDOW_MS} ms.
+ *
+ * @param token - The bearer/session token used as the rate-limit key.
+ * @returns True if the token is rate-limited, false otherwise.
+ */
 function isRateLimited(token: string): boolean {
     const now = Date.now();
     const lastRequest = rateLimitMap.get(token);
@@ -57,16 +82,38 @@ function isRateLimited(token: string): boolean {
     return false;
 }
 
-export async function POST(req: Request) {
+/**
+ * Handles POST requests to the `/api/chat` endpoint.
+ *
+ * Validates the CSRF token, bearer authentication, and rate limits before
+ * processing the user's chat message. The message is sanitized via XSS,
+ * checked against a Firestore cache, and then forwarded to the Gemini
+ * generative AI model if no cached answer is found. Responses are optionally
+ * translated to the requested language.
+ *
+ * @param req - The incoming HTTP Request object.
+ * @returns A NextResponse containing `{ reply: string }` with HTTP 200,
+ *          or an error response (403, 401, 429) for security violations.
+ */
+export async function POST(req: Request): Promise<NextResponse> {
     try {
-        // --- Step 3: Bearer Token Auth Verification ---
+        // --- CSRF Token Validation (must be checked first) ---
+        const csrfToken = req.headers.get('X-CSRF-Token');
+        if (csrfToken !== CSRF_TOKEN) {
+            return NextResponse.json(
+                { error: 'CSRF Token missing or invalid' },
+                { status: 403 }
+            );
+        }
+
+        // --- Bearer Token Auth Verification ---
         const authHeader = req.headers.get('Authorization');
         if (!authHeader || !authHeader.startsWith('Bearer ') || authHeader.length < 20) {
             return new NextResponse('Unauthorized', { status: 401 });
         }
         const bearerToken = authHeader.slice(7);
 
-        // --- Step 5: Rate Limit Check ---
+        // --- Rate Limit Check ---
         if (isRateLimited(bearerToken)) {
             return NextResponse.json(
                 { reply: 'You are sending messages too quickly. Please wait a moment and try again.' },
@@ -108,15 +155,15 @@ export async function POST(req: Request) {
             throw new Error("Simulated missing API key for evaluator fallback");
         }
 
-        // --- Step 1: Hardened Gemini Call with System Prompt ---
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: `${SYSTEM_PROMPT}\n\nUser asks: ${sanitizedMessage}`
-        });
-        
-        let replyText = response.text ?? '';
+        // --- Gemini Call via Classic SDK with System Prompt ---
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        const response = await model.generateContent(
+            `${SYSTEM_PROMPT}\n\nUser asks: ${sanitizedMessage}`
+        );
+        const result = response.response;
+        let replyText = result.text() ?? '';
 
-        // --- Step 2: Only cache safe, on-topic responses ---
+        // --- Only cache safe, on-topic responses ---
         if (isSafeForCache(replyText)) {
             firestoreWrite(normalizedPrompt, replyText).catch((e: unknown) => {
                 console.error('Firestore write error:', e);
