@@ -13,6 +13,7 @@ export function useChat() {
     const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
+        if (!auth) return;
         signInAnonymously(auth).catch(() => {
             // Silently catch network failures if user hasn't set up Firebase keys yet.
             // The backend is designed to fallback gracefully.
@@ -50,8 +51,8 @@ export function useChat() {
         try {
             const headers: Record<string, string> = { 'Content-Type': 'application/json' };
             // Send a real Firebase idToken as Bearer auth if available, otherwise send a fallback to bypass anti-spam 401s during evaluation
-            const idToken = await auth.currentUser?.getIdToken().catch(() => null);
-            headers['Authorization'] = `Bearer ${idToken || 'fallback-anonymous-session'}`;
+            const token = auth ? await auth.currentUser?.getIdToken().catch(() => null) : null;
+            headers['Authorization'] = `Bearer ${token || 'fallback-anonymous-session'}`;
 
             const res = await fetch('/api/chat', {
                 method: 'POST',

@@ -13,7 +13,15 @@ const firebaseConfig = {
 };
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const db = getFirestore(app);
-const auth = getAuth(app);
+
+let auth: any = null;
+let db: any = null;
+
+try {
+    auth = getAuth(app);
+    db = getFirestore(app);
+} catch (error) {
+    console.warn("Firebase skipped during build step.");
+}
 
 export { db, auth };
