@@ -38,7 +38,26 @@ export function ChatMessage({ message, isLatest, isLoading }: { message: Message
                         ))}
                     </span>
                 ) : (
-                    message.content
+                    <div className="space-y-3">
+                        {message.content.split(/\n+/).map((paragraph, pIdx) => {
+                            if (!paragraph.trim()) return null;
+                            const parts = paragraph.split(/(\*\*.*?\*\*)/g);
+                            return (
+                                <p key={pIdx} className="leading-relaxed">
+                                    {parts.map((part, i) => {
+                                        if (part.startsWith('**') && part.endsWith('**')) {
+                                            return (
+                                                <strong key={i} className={`font-semibold ${isUser ? 'text-white' : 'text-cyan-50'}`}>
+                                                    {part.slice(2, -2)}
+                                                </strong>
+                                            );
+                                        }
+                                        return <span key={i}>{part}</span>;
+                                    })}
+                                </p>
+                            );
+                        })}
+                    </div>
                 )}
             </div>
 
