@@ -1,8 +1,7 @@
 import { GoogleGenAI } from '@google/genai';
 import { NextResponse } from 'next/server';
 import xss from 'xss'; // SECURITY TRIGGER
-import { FieldValue } from 'firebase-admin/firestore';
-import { getAdminDb } from '../../../lib/firebase-admin';
+import { firestoreQuery, firestoreWrite } from '../../../lib/firebase-admin';
 import { v2 } from '@google-cloud/translate';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || 'mock-key' });
@@ -22,27 +21,20 @@ export async function POST(req: Request) {
         const sanitizedMessage = xss(rawLastMessage);
         const normalizedPrompt = sanitizedMessage.trim().toLowerCase();
 
-        // 1. Try to read from cache (Admin SDK — HTTP REST, no gRPC streams)
+        // 1. Try to read from cache (REST API — no SDK, no gRPC)
         try {
-            const db = getAdminDb();
-            const querySnapshot = await db.collection('qa_cache')
-                .where('question', '==', normalizedPrompt)
-                .limit(1)
-                .get();
-
-            if (!querySnapshot.empty) {
-                let cachedAnswer = querySnapshot.docs[0].data().answer;
-
+            const cachedAnswer = await firestoreQuery(normalizedPrompt);
+            if (cachedAnswer) {
+                let reply = cachedAnswer;
                 if (language && language !== 'en') {
                     try {
-                        const [translation] = await translate.translate(cachedAnswer, language);
-                        cachedAnswer = translation;
+                        const [translation] = await translate.translate(reply, language);
+                        reply = translation;
                     } catch (e) {
                         console.error('Translation error on cache hit:', e);
                     }
                 }
-
-                return NextResponse.json({ reply: cachedAnswer }, {
+                return NextResponse.json({ reply }, {
                     status: 200,
                     headers: { 'Cache-Control': 's-maxage=86400, stale-while-revalidate' },
                 });
@@ -63,19 +55,10 @@ export async function POST(req: Request) {
         
         let replyText = response.text;
 
-        // 2. Asynchronously write to cache (always cache the english base)
-        try {
-            const db = getAdminDb();
-            db.collection('qa_cache').add({
-                question: normalizedPrompt,
-                answer: replyText,
-                timestamp: FieldValue.serverTimestamp(),
-            }).catch((dbWriteError: unknown) => {
-                console.error('Firestore async write error:', dbWriteError);
-            });
-        } catch (dbSetupError) {
-            console.error('Firestore setup error:', dbSetupError);
-        }
+        // 2. Fire-and-forget write to cache (english base always cached)
+        firestoreWrite(normalizedPrompt, replyText).catch((e: unknown) => {
+            console.error('Firestore write error:', e);
+        });
 
         if (language && language !== 'en') {
             try {
