@@ -1,5 +1,8 @@
 import { type NextConfig } from 'next';
 
+// React 19 requires eval() in dev mode for callstack debugging — never used in production builds
+const isDev = process.env.NODE_ENV !== 'production';
+
 const nextConfig: NextConfig = {
   reactStrictMode: true, // Recommended for identifying potential problems in an application
   output: 'standalone', // Critical for Cloud Run efficiency and deployment
@@ -16,11 +19,11 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: `
               default-src 'self';
-              script-src 'self' 'unsafe-inline' 'unsafe-eval';
+              script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''};
               style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://api.fontshare.com;
               img-src 'self' data:;
               font-src 'self' https://fonts.gstatic.com https://cdn.fontshare.com;
-              connect-src 'self' https://generativelanguage.googleapis.com https://translation.googleapis.com;
+              connect-src 'self' https://generativelanguage.googleapis.com https://translation.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com;
               frame-ancestors 'none'; // Prevents clickjacking by disallowing embedding in iframes
               form-action 'self';
               base-uri 'self';

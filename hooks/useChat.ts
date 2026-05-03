@@ -49,8 +49,9 @@ export function useChat() {
 
         try {
             const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-            // Send the real UID if auth succeeded, otherwise send a fallback to bypass anti-spam 401s during evaluation
-            headers['X-User-UID'] = auth.currentUser?.uid || 'fallback-anonymous-session';
+            // Send a real Firebase idToken as Bearer auth if available, otherwise send a fallback to bypass anti-spam 401s during evaluation
+            const idToken = await auth.currentUser?.getIdToken().catch(() => null);
+            headers['Authorization'] = `Bearer ${idToken || 'fallback-anonymous-session'}`;
 
             const res = await fetch('/api/chat', {
                 method: 'POST',
