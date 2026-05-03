@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
+import { signInAnonymously } from 'firebase/auth';
+import { auth } from '../lib/firebase';
 
 export interface Message {
     role: 'user' | 'assistant';
@@ -12,6 +14,10 @@ export function useChat() {
     const [hasStartedChat, setHasStartedChat] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        signInAnonymously(auth).catch(console.error);
+    }, []);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -42,9 +48,14 @@ export function useChat() {
         setMessages([...newMessages, { role: 'assistant', content: '...' }]);
 
         try {
+            const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+            if (auth.currentUser?.uid) {
+                headers['X-User-UID'] = auth.currentUser.uid;
+            }
+
             const res = await fetch('/api/chat', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify({ messages: newMessages }),
             });
 
