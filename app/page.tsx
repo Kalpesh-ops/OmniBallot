@@ -37,7 +37,6 @@ export default function Home() {
         isOpen={sidebarOpen}
         onToggle={() => setSidebarOpen(!sidebarOpen)}
         onSuggestionClick={handleSuggestionClick}
-        hasStartedChat={hasStartedChat}
         language={language}
         onLanguageChange={setLanguage}
       />
@@ -67,11 +66,7 @@ export default function Home() {
           aria-label="Main Navigation"
           className="w-full max-w-4xl text-center relative z-10 shrink-0"
         >
-          {/* 
-            OmniBallot title — uses leading-normal to prevent bg-clip-text from
-            clipping the top/bottom of the Newsreader font glyphs (fix from
-            conversation 13ea83e7). The pb-1 ensures descenders aren't cut off.
-          */}
+          {/* leading-normal + pb-1 stop bg-clip-text from clipping Newsreader glyphs */}
           <motion.h1
             layout
             className={`font-newsreader italic font-semibold tracking-tight leading-normal pb-1 text-transparent bg-clip-text bg-gradient-to-br from-white to-white/60 transition-all duration-500 ${

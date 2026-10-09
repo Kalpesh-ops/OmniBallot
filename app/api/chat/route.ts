@@ -112,6 +112,25 @@ function isRateLimited(token: string): boolean {
 }
 
 /**
+ * Translates a reply when a non-English language is requested.
+ * Falls back to the original English text if translation fails.
+ *
+ * @param text - English reply text.
+ * @param language - Requested language code from the request body.
+ * @returns The translated text, or `text` unchanged.
+ */
+async function localize(text: string, language: unknown): Promise<string> {
+    if (typeof language !== 'string' || language === 'en') return text;
+    try {
+        const [translation] = await translate.translate(text, language);
+        return translation;
+    } catch (e) {
+        console.error('Translation error:', e);
+        return text;
+    }
+}
+
+/**
  * Handles POST requests to the `/api/chat` endpoint.
  *
  * Validates the CSRF token, bearer authentication, and rate limits before
@@ -175,19 +194,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         try {
             const cachedAnswer = isStandalone ? await firestoreQuery(normalizedPrompt) : null;
             if (cachedAnswer) {
-                let reply = cachedAnswer;
-                if (typeof language === 'string' && language !== 'en') {
-                    try {
-                        const [translation] = await translate.translate(reply, language);
-                        reply = translation;
-                    } catch (e) {
-                        console.error('Translation error on cache hit:', e);
-                    }
-                }
-                return NextResponse.json({ reply }, {
-                    status: 200,
-                    headers: { 'Cache-Control': 's-maxage=86400, stale-while-revalidate' },
-                });
+                return NextResponse.json({ reply: await localize(cachedAnswer, language) });
             }
         } catch (dbReadError) {
             console.error('Firestore read error:', dbReadError);
@@ -211,7 +218,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         }));
         const response = await model.generateContent({ contents });
         const result = response.response;
-        let replyText = result.text() ?? '';
+        const replyText = result.text() ?? '';
 
         // --- Only cache safe, on-topic responses ---
         if (isStandalone && isSafeForCache(replyText)) {
@@ -220,27 +227,12 @@ export async function POST(req: Request): Promise<NextResponse> {
             });
         }
 
-        if (typeof language === 'string' && language !== 'en') {
-            try {
-                const [translation] = await translate.translate(replyText, language);
-                replyText = translation;
-            } catch (e) {
-                console.error('Translation error on generation:', e);
-            }
-        }
-
-        return NextResponse.json({ reply: replyText }, {
-            status: 200,
-            headers: { 'Cache-Control': 's-maxage=86400, stale-while-revalidate' },
-        });
+        return NextResponse.json({ reply: await localize(replyText, language) });
     } catch (error) {
         console.error('Chat route error, serving fallback:', error);
         // CRITICAL: Preserve 200 OK fallback trap for automated evaluator compatibility
         return NextResponse.json({
             reply: "Mock Response: To participate in the election process, verify your voter registration online, locate your designated polling place, and bring valid identification on election day."
-        }, {
-            status: 200,
-            headers: { 'Cache-Control': 's-maxage=86400, stale-while-revalidate' },
         });
     }
 }

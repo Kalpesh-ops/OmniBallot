@@ -11,10 +11,9 @@ export function DisclaimerModal() {
 
   useEffect(() => {
     // Show modal on first visit (no localStorage entry)
-    const accepted = localStorage.getItem(STORAGE_KEY);
-    if (!accepted) {
-      setIsOpen(true);
-    }
+    // localStorage is client-only, so this cannot be read during first render without a hydration mismatch.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (!localStorage.getItem(STORAGE_KEY)) setIsOpen(true);
   }, []);
 
   const handleAccept = () => {

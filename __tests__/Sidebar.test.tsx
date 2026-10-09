@@ -16,13 +16,9 @@ describe('Sidebar', () => {
                 isOpen={true}
                 onToggle={mockOnToggle}
                 onSuggestionClick={mockOnSuggestionClick}
-                hasStartedChat={false}
             />
         );
 
-        // Expect 5 suggestion buttons + 1 toggle button = 6 buttons total
-        const buttons = screen.getAllByRole('button');
-        
         // 5 suggestions
         expect(screen.getByText('Voter Registration')).toBeInTheDocument();
         expect(screen.getByText('Polling Locations')).toBeInTheDocument();
@@ -37,7 +33,6 @@ describe('Sidebar', () => {
                 isOpen={true}
                 onToggle={mockOnToggle}
                 onSuggestionClick={mockOnSuggestionClick}
-                hasStartedChat={false}
             />
         );
 

@@ -68,7 +68,6 @@ export function useChat() {
         if (!hasStartedChat) setHasStartedChat(true);
 
         const newMessages: Message[] = [...messages, { role: 'user', content: messageText }];
-        setMessages(newMessages);
         setInput('');
         setIsLoading(true);
 

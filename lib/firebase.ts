@@ -1,6 +1,5 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+import { getAuth, type Auth } from 'firebase/auth';
 
 // Firebase client SDK — browser-side only (anonymous auth)
 const firebaseConfig = {
@@ -12,16 +11,12 @@ const firebaseConfig = {
     appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || ""
 };
 
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-
-let auth: any = null;
-let db: any = null;
+let auth: Auth | null = null;
 
 try {
-    auth = getAuth(app);
-    db = getFirestore(app);
-} catch (error) {
+    auth = getAuth(getApps().length ? getApp() : initializeApp(firebaseConfig));
+} catch {
     console.warn("Firebase skipped during build step.");
 }
 
-export { db, auth };
+export { auth };

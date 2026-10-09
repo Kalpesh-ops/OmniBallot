@@ -52,12 +52,11 @@ const suggestions = [
  *   - `isOpen` — Whether the sidebar panel is currently visible.
  *   - `onToggle` — Callback to open or close the sidebar.
  *   - `onSuggestionClick` — Callback invoked with the suggestion query text.
- *   - `hasStartedChat` — Whether the user has sent at least one message.
  *   - `language` — Currently selected {@link LanguageCode}.
  *   - `onLanguageChange` — Callback to change the active language.
  * @returns The rendered sidebar React element.
  */
-export function Sidebar({ isOpen, onToggle, onSuggestionClick, hasStartedChat, language, onLanguageChange }: SidebarProps) {
+export function Sidebar({ isOpen, onToggle, onSuggestionClick, language, onLanguageChange }: SidebarProps) {
   return (
     <>
       {/* Toggle Button — always visible */}

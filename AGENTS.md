@@ -133,7 +133,7 @@ Returns: `{ input, setInput, messages, isLoading, hasStartedChat, handleSubmit, 
 
 **Method:** POST  
 **Body:** `{ messages: [{ role, content }] }`  
-**Response:** `{ reply: string }` with `Cache-Control: s-maxage=86400, stale-while-revalidate`
+**Response:** `{ reply: string }`
 
 **Security:** User input sanitized via `xss()` before being sent to Gemini.  
 **Fallback:** If `GEMINI_API_KEY` is missing or API fails → returns mock educational response with HTTP 200 (ensures automated evaluator compatibility).
