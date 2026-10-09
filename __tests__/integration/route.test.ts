@@ -121,7 +121,16 @@ describe('/api/chat POST endpoint', () => {
         expect((await post(oneQuestion)).status).toBe(503);
     });
 
-    it('returns 502 with a friendly error when Gemini fails', async () => {
+    it('falls back to the second model when the first one fails', async () => {
+        mockGenerateContent
+            .mockRejectedValueOnce(new Error('503 high demand'))
+            .mockResolvedValueOnce({ response: { text: () => 'From fallback.' } });
+        const res = await post(oneQuestion);
+        expect((await res.json()).reply).toBe('From fallback.');
+        expect(mockGetGenerativeModel.mock.calls.map((c) => c[0].model)).toEqual(['gemini-3.8-flash', 'gemini-3.5-flash']);
+    });
+
+    it('returns 502 with a friendly error when every model fails', async () => {
         mockGenerateContent.mockRejectedValue(new Error('404 model gone'));
         const res = await post(oneQuestion);
         expect(res.status).toBe(502);
