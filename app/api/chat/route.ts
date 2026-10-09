@@ -92,7 +92,7 @@ setInterval(() => {
             rateLimitMap.delete(key);
         }
     }
-}, 60_000);
+}, 60_000).unref();
 
 /**
  * Determines whether a given token has exceeded the rate limit.
@@ -198,10 +198,17 @@ export async function POST(req: Request): Promise<NextResponse> {
         }
 
         // --- Gemini Call via Classic SDK with System Prompt ---
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-        const response = await model.generateContent(
-            `${SYSTEM_PROMPT}\n\nUser asks: ${sanitizedMessage}`
-        );
+        const model = genAI.getGenerativeModel({
+            model: MODEL_NAME,
+            systemInstruction: SYSTEM_PROMPT,
+        });
+        // Gemini requires history to start with a user turn and uses 'model' for assistant.
+        const firstUser = sanitizedMessages.findIndex((m) => m.role === 'user');
+        const contents = sanitizedMessages.slice(firstUser).map((m) => ({
+            role: m.role === 'assistant' ? 'model' : 'user',
+            parts: [{ text: m.content }],
+        }));
+        const response = await model.generateContent({ contents });
         const result = response.response;
         let replyText = result.text() ?? '';
 

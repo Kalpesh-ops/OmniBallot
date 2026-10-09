@@ -18,9 +18,11 @@ beforeAll(() => {
 });
 
 // Mock external dependencies to isolate route logic
+const mockFirestoreQuery = jest.fn().mockResolvedValue(null);
+const mockFirestoreWrite = jest.fn().mockResolvedValue(undefined);
 jest.mock('../../lib/firebase-admin', () => ({
-    firestoreQuery: jest.fn().mockResolvedValue(null),
-    firestoreWrite: jest.fn().mockResolvedValue(undefined),
+    firestoreQuery: (...args: unknown[]) => mockFirestoreQuery(...args),
+    firestoreWrite: (...args: unknown[]) => mockFirestoreWrite(...args),
 }));
 
 jest.mock('@google-cloud/translate', () => ({
@@ -31,15 +33,15 @@ jest.mock('@google-cloud/translate', () => ({
     },
 }));
 
+const mockGenerateContent = jest.fn().mockResolvedValue({
+    response: { text: () => 'Mock AI response about voter registration.' },
+});
+const mockGetGenerativeModel = jest.fn().mockReturnValue({
+    generateContent: (...args: unknown[]) => mockGenerateContent(...args),
+});
 jest.mock('@google/generative-ai', () => ({
     GoogleGenerativeAI: jest.fn().mockImplementation(() => ({
-        getGenerativeModel: jest.fn().mockReturnValue({
-            generateContent: jest.fn().mockResolvedValue({
-                response: {
-                    text: () => 'Mock AI response about voter registration.',
-                },
-            }),
-        }),
+        getGenerativeModel: (...args: unknown[]) => mockGetGenerativeModel(...args),
     })),
 }));
 
@@ -184,5 +186,64 @@ describe('/api/chat POST endpoint', () => {
             const response = await POST(req);
             expect(response.status).toBe(400);
         }
+    });
+
+    describe('with GEMINI_API_KEY set', () => {
+        beforeAll(() => { process.env.GEMINI_API_KEY = 'test-key'; });
+        afterAll(() => { delete process.env.GEMINI_API_KEY; });
+        beforeEach(() => {
+            mockGenerateContent.mockClear();
+            mockGetGenerativeModel.mockClear();
+            mockFirestoreQuery.mockClear();
+            mockFirestoreWrite.mockClear();
+        });
+
+        const post = (messages: unknown[], ip: string) =>
+            POST(new Request('http://localhost:3000/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': 'omni-secure-token-2026',
+                    Authorization: 'Bearer valid-token-for-testing-purposes',
+                    'x-forwarded-for': ip,
+                },
+                body: JSON.stringify({ messages, language: 'en' }),
+            }));
+
+        /** Test 6: model name, system instruction and full history reach Gemini. */
+        it('sends system instruction and full history to gemini-2.5-flash', async () => {
+            await post([
+                { role: 'user', content: 'How do I register?' },
+                { role: 'assistant', content: 'Online or by mail.' },
+                { role: 'user', content: 'What is the deadline?' },
+            ], '10.1.0.1');
+
+            expect(mockGetGenerativeModel).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    model: 'gemini-2.5-flash',
+                    systemInstruction: expect.stringContaining('OmniBallot'),
+                })
+            );
+            const { contents } = mockGenerateContent.mock.calls[0][0];
+            expect(contents.map((c: { role: string }) => c.role)).toEqual(['user', 'model', 'user']);
+            expect(contents[2].parts[0].text).toBe('What is the deadline?');
+        });
+
+        /** Test 7: only standalone questions touch the cache. */
+        it('caches a first question but skips the cache for follow-ups', async () => {
+            await post([{ role: 'user', content: 'How do I register?' }], '10.1.0.2');
+            expect(mockFirestoreQuery).toHaveBeenCalledTimes(1);
+            expect(mockFirestoreWrite).toHaveBeenCalledTimes(1);
+
+            mockFirestoreQuery.mockClear();
+            mockFirestoreWrite.mockClear();
+            await post([
+                { role: 'user', content: 'How do I register?' },
+                { role: 'assistant', content: 'Online.' },
+                { role: 'user', content: 'And the deadline?' },
+            ], '10.1.0.3');
+            expect(mockFirestoreQuery).not.toHaveBeenCalled();
+            expect(mockFirestoreWrite).not.toHaveBeenCalled();
+        });
     });
 });
