@@ -39,7 +39,7 @@ OmniBallot utilizes a modern, serverless architecture that separates an interact
 
 This application is deeply integrated into the Google Cloud ecosystem, utilizing a suite of services for AI, translation, database, and hosting.
 
-* **`@google/genai` (Gemini 2.5 Flash):** The core intelligence engine. Gemini processes user queries regarding the electoral process, providing concise, strictly educational responses without offering official legal advice.
+* **`@google/generative-ai` (Gemini 2.5 Flash):** The core intelligence engine. Gemini processes user queries regarding the electoral process, providing concise, strictly educational responses without offering official legal advice.
 * **`@google-cloud/translate` (v2 API):** Enables multi-language accessibility. Responses are translated on-the-fly to Spanish (`es`) or Hindi (`hi`), ensuring vital civic information crosses language barriers.
 * **Google Cloud Run:** The target deployment environment. OmniBallot is built as a Dockerized standalone build for serverless execution, providing auto-scaling and high availability.
 * **Firebase Authentication:** Utilized on the client side to generate anonymous sessions. The client obtains a Firebase `idToken` and sends it as a `Bearer` token in the `Authorization` header, serving as a verified anti-spam mechanism.

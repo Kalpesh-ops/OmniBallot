@@ -158,4 +158,31 @@ describe('/api/chat POST endpoint', () => {
         expect(typeof data.reply).toBe('string');
         expect(data.reply.length).toBeGreaterThan(0);
     });
+
+    /**
+     * Test 5: Input validation
+     * Malformed or oversized message payloads must return HTTP 400.
+     */
+    it('returns 400 for invalid messages payloads', async () => {
+        const bodies = [
+            { messages: [] },
+            { messages: 'nope' },
+            { messages: [{ role: 'assistant', content: 'hi' }] },
+            { messages: [{ role: 'user', content: 'x'.repeat(1001) }] },
+        ];
+        for (const [i, body] of bodies.entries()) {
+            const req = new Request('http://localhost:3000/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': 'omni-secure-token-2026',
+                    Authorization: 'Bearer valid-token-for-testing-purposes',
+                    'x-forwarded-for': `10.0.0.${i}`,
+                },
+                body: JSON.stringify(body),
+            });
+            const response = await POST(req);
+            expect(response.status).toBe(400);
+        }
+    });
 });

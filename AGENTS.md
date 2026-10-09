@@ -24,7 +24,7 @@
 | CSS           | Tailwind CSS **v4**               | Uses `@import "tailwindcss"` + `@theme inline` syntax |
 | Animations    | Framer Motion                     | 12.38+                                 |
 | Icons         | lucide-react                      | Latest                                 |
-| AI Backend    | @google/genai (Gemini 2.5 Flash)  | With mock fallback for offline/eval    |
+| AI Backend    | @google/generative-ai (Gemini 2.5 Flash)  | With mock fallback for offline/eval    |
 | Sanitization  | xss                               | Server-side input sanitization         |
 | Firebase      | firebase (Firestore)              | Configured but used as Google Service trigger |
 | Translation   | @google-cloud/translate           | Integrated dependency for multi-lang   |

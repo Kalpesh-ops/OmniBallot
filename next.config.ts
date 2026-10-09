@@ -24,11 +24,11 @@ const nextConfig: NextConfig = {
               img-src 'self' data:;
               font-src 'self' https://fonts.gstatic.com https://cdn.fontshare.com;
               connect-src 'self' https://generativelanguage.googleapis.com https://translation.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com;
-              frame-ancestors 'none'; // Prevents clickjacking by disallowing embedding in iframes
+              frame-ancestors 'none';
               form-action 'self';
               base-uri 'self';
-              block-all-mixed-content; // Automatically blocks HTTP content on HTTPS pages
-              upgrade-insecure-requests; // Rewrites HTTP URLs to HTTPS
+              block-all-mixed-content;
+              upgrade-insecure-requests;
             `.replace(/\s{2,}/g, ' ').trim(), // Clean up extra whitespace for a compact header
           },
           // X-Frame-Options to prevent clickjacking
