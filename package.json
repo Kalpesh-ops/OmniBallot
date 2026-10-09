@@ -10,15 +10,12 @@
     "test": "jest --forceExit"
   },
   "dependencies": {
-    "@google-cloud/translate": "^9.4.1",
     "@google/generative-ai": "^0.24.1",
-    "firebase": "^12.12.1",
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.14.0",
     "next": "16.2.4",
     "react": "19.2.4",
-    "react-dom": "19.2.4",
-    "xss": "^1.0.15"
+    "react-dom": "19.2.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

@@ -5,7 +5,6 @@ const isDev = process.env.NODE_ENV !== 'production';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true, // Recommended for identifying potential problems in an application
-  output: 'standalone', // Critical for Cloud Run efficiency and deployment
 
   async headers() {
     return [
@@ -23,7 +22,7 @@ const nextConfig: NextConfig = {
               style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://api.fontshare.com;
               img-src 'self' data:;
               font-src 'self' https://fonts.gstatic.com https://cdn.fontshare.com;
-              connect-src 'self' https://generativelanguage.googleapis.com https://translation.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com;
+              connect-src 'self';
               frame-ancestors 'none';
               form-action 'self';
               base-uri 'self';

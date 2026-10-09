@@ -1,15 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
-import { signInAnonymously } from 'firebase/auth';
-import { auth } from '../lib/firebase';
 import type { Message, LanguageCode } from '../types';
 
 /**
  * Custom React hook that manages the entire chat lifecycle for OmniBallot.
  *
  * Provides state management for messages, input text, loading status, language
- * selection, and auto-scroll behavior. Handles anonymous Firebase authentication,
- * constructs authenticated API requests with CSRF protection, and processes
- * assistant responses from the `/api/chat` endpoint.
+ * selection, and auto-scroll behavior, and sends messages to `/api/chat`.
  *
  * @returns An object containing:
  *   - `input` — Current text input value.
@@ -32,14 +28,6 @@ export function useChat() {
     const [language, setLanguage] = useState<LanguageCode>('en');
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
-
-    useEffect(() => {
-        if (!auth) return;
-        signInAnonymously(auth).catch(() => {
-            // Silently catch network failures if user hasn't set up Firebase keys yet.
-            // The backend is designed to fallback gracefully.
-        });
-    }, []);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -75,26 +63,18 @@ export function useChat() {
         setMessages([...newMessages, { role: 'assistant', content: '...' }]);
 
         try {
-            const headers: Record<string, string> = {
-                'Content-Type': 'application/json',
-                'X-CSRF-Token': 'omni-secure-token-2026',
-            };
-            // Send a real Firebase idToken as Bearer auth if available, otherwise send a fallback to bypass anti-spam 401s during evaluation
-            const token = auth ? await auth.currentUser?.getIdToken().catch(() => null) : null;
-            headers['Authorization'] = `Bearer ${token || 'fallback-anonymous-session'}`;
-
             const res = await fetch('/api/chat', {
                 method: 'POST',
-                headers,
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ messages: newMessages, language }),
             });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
 
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-            const data = await res.json();
             setMessages([...newMessages, { role: 'assistant', content: data.reply }]);
-        } catch {
-            setMessages([...newMessages, { role: 'assistant', content: 'System error. Please try again.' }]);
+        } catch (e) {
+            const content = e instanceof Error && e.message ? e.message : 'System error. Please try again.';
+            setMessages([...newMessages, { role: 'assistant', content }]);
         } finally {
             setIsLoading(false);
         }

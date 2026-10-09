@@ -7,11 +7,11 @@
 
 ## Project Overview
 
-**OmniBallot** is an AI-powered election process education assistant built for the PromptWars hackathon. It helps users understand voter registration, polling locations, election timelines, ballot procedures, and voter ID requirements. It is **not** official legal/electoral advice.
+**OmniBallot** is an AI-powered election process education assistant built for the PromptWars hackathon (now a maintained hobby project). It helps users understand voter registration, polling locations, election timelines, ballot procedures, and voter ID requirements. It is **not** official legal/electoral advice.
 
 **Vertical:** Election Process Education  
-**Live stack:** Next.js 16 (App Router) + Tailwind CSS v4 + Framer Motion + Google Gemini 2.5 Flash  
-**Deployment target:** Google Cloud Run (Dockerized standalone build)
+**Live stack:** Next.js 16 (App Router) + Tailwind CSS v4 + Framer Motion + Google Gemini (`gemini-3.8-flash`, override with `GEMINI_MODEL`)  
+**Deployment:** Vercel (https://omni-ballot.vercel.app). No GCP services are used.
 
 ---
 
@@ -24,10 +24,7 @@
 | CSS           | Tailwind CSS **v4**               | Uses `@import "tailwindcss"` + `@theme inline` syntax |
 | Animations    | Framer Motion                     | 12.38+                                 |
 | Icons         | lucide-react                      | Latest                                 |
-| AI Backend    | @google/generative-ai (Gemini 2.5 Flash)  | With mock fallback for offline/eval    |
-| Sanitization  | xss                               | Server-side input sanitization         |
-| Firebase      | firebase (Firestore)              | Configured but used as Google Service trigger |
-| Translation   | @google-cloud/translate           | Integrated dependency for multi-lang   |
+| AI Backend    | @google/generative-ai (Gemini)  | Needs `GEMINI_API_KEY`; errors return 502/503 |
 | Font: Display | Newsreader (Google Fonts)         | Loaded via `next/font/google`, variable `--font-newsreader` |
 | Font: Body    | Satoshi (Fontshare)               | Loaded via `<link>` in `layout.tsx`    |
 
@@ -87,7 +84,7 @@ Key: The `<main>` uses `h-dvh` (not `min-h-screen`) to correctly fit the dynamic
 ```
 OmniBallot/
 ├── app/
-│   ├── api/chat/route.ts     # POST endpoint — Gemini AI with XSS sanitization + mock fallback
+│   ├── api/chat/route.ts     # POST endpoint — origin check, rate limit, validation, Gemini
 │   ├── globals.css            # Tailwind v4 imports, @utility directives, bounce-dot animation
 │   ├── layout.tsx             # Root layout — Newsreader font, Satoshi CDN link, dark bg
 │   ├── page.tsx               # Main UI — two-state layout, sidebar, disclaimer, chat
@@ -98,11 +95,8 @@ OmniBallot/
 │   └── Sidebar.tsx            # Collapsible left sidebar with quick-topic suggestions
 ├── hooks/
 │   └── useChat.ts             # Chat state management — messages, loading, submit, suggestions
-├── lib/
-│   └── firebase.ts            # Firestore initialization (Google Services trigger)
 ├── next.config.ts             # Security headers (CSP, X-Frame-Options, etc.)
 ├── tailwind.config.ts         # Content paths + font family extensions
-├── Dockerfile                 # Multi-stage build for Cloud Run
 └── AGENTS.md                  # ← This file
 ```
 
@@ -132,17 +126,18 @@ Returns: `{ input, setInput, messages, isLoading, hasStartedChat, handleSubmit, 
 ## API Route — `/api/chat`
 
 **Method:** POST  
-**Body:** `{ messages: [{ role, content }] }`  
-**Response:** `{ reply: string }`
+**Body:** `{ messages: [{ role, content }], language?: 'en' | 'es' | 'hi' }` (1-20 messages, each under 1000 chars, last one from the user)  
+**Response:** `{ reply: string }`, or `{ error: string }` with 400 (bad payload), 403 (cross-site Origin), 429 (rate limit), 502 (Gemini failed), 503 (`GEMINI_API_KEY` missing).
 
-**Security:** User input sanitized via `xss()` before being sent to Gemini.  
-**Fallback:** If `GEMINI_API_KEY` is missing or API fails → returns mock educational response with HTTP 200 (ensures automated evaluator compatibility).
+**Protection:** Origin must match Host, 1 request per 3 s per client IP (last `x-forwarded-for` entry), bounded input. Replies render as plain React text, so no HTML sanitizing is needed.  
+**Language:** the requested language is added to the Gemini system instruction; there is no separate translation service.  
+**Errors:** there is deliberately no fake "mock" fallback. Failures are logged with `console.error` (see Vercel runtime logs) and shown to the user.
 
 ---
 
 ## Security Headers (next.config.ts)
 
-- `Content-Security-Policy` — self + Google APIs + Fontshare
+- `Content-Security-Policy` — self + Google Fonts + Fontshare (`connect-src 'self'`; Gemini is called server-side only)
 - `X-Frame-Options: DENY` — prevents clickjacking
 - `X-Content-Type-Options: nosniff` — prevents MIME-sniffing
 - `Referrer-Policy: strict-origin-when-cross-origin`
