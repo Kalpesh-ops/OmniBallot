@@ -8,6 +8,7 @@
 
 const FIRESTORE_BASE = `https://firestore.googleapis.com/v1/projects/${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}/databases/(default)/documents`;
 const TOKEN_URL = 'https://oauth2.googleapis.com/token';
+const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 let cachedToken: { token: string; expiresAt: number } | null = null;
 
@@ -99,15 +100,22 @@ export async function firestoreQuery(normalizedPrompt: string): Promise<string |
                         value: { stringValue: normalizedPrompt },
                     },
                 },
-                limit: 1,
+                limit: 10,
             },
         }),
     });
 
     if (!res.ok) throw new Error(`Firestore query failed: ${res.status}`);
     const docs = await res.json();
-    const doc = docs[0]?.document;
-    return doc?.fields?.answer?.stringValue ?? null;
+    // Several entries can exist once old ones expire; use the newest unexpired one.
+    let best: { answer: string; at: number } | null = null;
+    for (const d of docs) {
+        const f = d.document?.fields;
+        const at = Date.parse(f?.timestamp?.timestampValue ?? '');
+        const answer = f?.answer?.stringValue;
+        if (answer && Date.now() - at < CACHE_TTL_MS && (!best || at > best.at)) best = { answer, at };
+    }
+    return best?.answer ?? null;
 }
 
 /** Write a question/answer pair to qa_cache. Fire-and-forget. */

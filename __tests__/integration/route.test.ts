@@ -246,4 +246,20 @@ describe('/api/chat POST endpoint', () => {
             expect(mockFirestoreWrite).not.toHaveBeenCalled();
         });
     });
+
+    /** Test 8: rate limit keys on the last x-forwarded-for entry, which clients cannot forge. */
+    it('rate limits by the last forwarded IP, ignoring spoofed earlier entries', async () => {
+        const send = (xff: string) => POST(new Request('http://localhost:3000/api/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': 'omni-secure-token-2026',
+                Authorization: 'Bearer valid-token-for-testing-purposes',
+                'x-forwarded-for': xff,
+            },
+            body: JSON.stringify({ messages: [{ role: 'user', content: 'hi' }] }),
+        }));
+        expect((await send('1.1.1.1, 9.9.9.9')).status).toBe(200);
+        expect((await send('2.2.2.2, 9.9.9.9')).status).toBe(429);
+    });
 });

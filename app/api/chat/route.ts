@@ -143,7 +143,8 @@ export async function POST(req: Request): Promise<NextResponse> {
         const bearerToken = authHeader.slice(7);
 
         // --- Rate Limit Check (per client IP; shared fallback tokens must not share a bucket) ---
-        const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
+        // The LAST x-forwarded-for entry is the one Google's load balancer appended; earlier ones are client-supplied.
+        const clientIp = req.headers.get('x-forwarded-for')?.split(',').pop()?.trim();
         if (isRateLimited(clientIp || bearerToken)) {
             return NextResponse.json(
                 { reply: 'You are sending messages too quickly. Please wait a moment and try again.' },
